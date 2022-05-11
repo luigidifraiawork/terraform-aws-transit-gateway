@@ -32,45 +32,6 @@ module "tgw" {
   # When "true", allows service discovery through IGMP
   enable_mutlicast_support = false
 
-  #  vpc_attachments = {
-  #    vpc1 = {
-  #      vpc_id       = module.vpc1.vpc_id
-  #      subnet_ids   = module.vpc1.private_subnets
-  #      dns_support  = true
-  #      ipv6_support = true
-  #
-  #      transit_gateway_default_route_table_association = false
-  #      transit_gateway_default_route_table_propagation = false
-  #
-  #      tgw_routes = [
-  #        {
-  #          destination_cidr_block = "30.0.0.0/16"
-  #        },
-  #        {
-  #          blackhole              = true
-  #          destination_cidr_block = "0.0.0.0/0"
-  #        }
-  #      ]
-  #    },
-  #    vpc2 = {
-  #      vpc_id     = module.vpc2.vpc_id
-  #      subnet_ids = module.vpc2.private_subnets
-  #
-  #      tgw_routes = [
-  #        {
-  #          destination_cidr_block = "50.0.0.0/16"
-  #        },
-  #        {
-  #          blackhole              = true
-  #          destination_cidr_block = "10.10.10.10/32"
-  #        }
-  #      ]
-  #    },
-  #  }
-  #
-  #  ram_allow_external_principals = true
-  #  ram_principals                = [307990089504]
-
   enable_default_route_table_association = false
   enable_default_route_table_propagation = false
 
@@ -90,22 +51,23 @@ module "vpc_shrd" {
   name = "shrd-vpc"
   cidr = "10.3.0.0/16"
 
-  azs            = ["${local.region}a", "${local.region}b", "${local.region}c"]
-  public_subnets = ["10.3.1.0/24", "10.3.2.0/24", "10.3.3.0/24"]
+  azs             = ["${local.region}a", "${local.region}b", "${local.region}c"]
+  private_subnets = ["10.3.11.0/24", "10.3.12.0/24", "10.3.13.0/24"]
+  public_subnets  = ["10.3.1.0/24", "10.3.2.0/24", "10.3.3.0/24"]
 
   tags = local.tags
 }
 
-#resource "aws_route" "shrd_to_tgw_private" {
-#  count                  = length(module.vpc_shrd.azs)
-#  route_table_id         = module.vpc_shrd.private_route_table_ids[count.index]
-#  destination_cidr_block = "10.0.0.0/8"
-#  transit_gateway_id     = module.tgw.ec2_transit_gateway_id
-#
-#  depends_on = [
-#    aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_shrd,
-#  ]
-#}
+resource "aws_route" "shrd_to_tgw_private" {
+  count                  = length(module.vpc_shrd.azs)
+  route_table_id         = module.vpc_shrd.private_route_table_ids[count.index]
+  destination_cidr_block = "10.0.0.0/8"
+  transit_gateway_id     = module.tgw.ec2_transit_gateway_id
+
+  depends_on = [
+    aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_shrd,
+  ]
+}
 
 resource "aws_route" "shrd_to_tgw_public" {
   route_table_id         = module.vpc_shrd.public_route_table_ids[0]
@@ -155,24 +117,25 @@ module "vpc_dev" {
   name = "dev-vpc"
   cidr = "10.1.0.0/16"
 
-  azs            = ["${local.region}a", "${local.region}b", "${local.region}c"]
-  public_subnets = ["10.1.1.0/24", "10.1.2.0/24", "10.1.3.0/24"]
+  azs             = ["${local.region}a", "${local.region}b", "${local.region}c"]
+  private_subnets = ["10.1.11.0/24", "10.1.12.0/24", "10.1.13.0/24"]
+  public_subnets  = ["10.1.1.0/24", "10.1.2.0/24", "10.1.3.0/24"]
 
   create_igw = false
 
   tags = local.tags
 }
 
-#resource "aws_route" "dev_to_tgw_private" {
-#  count                  = length(module.vpc_dev.azs)
-#  route_table_id         = module.vpc_dev.private_route_table_ids[count.index]
-#  destination_cidr_block = "0.0.0.0/0"
-#  transit_gateway_id     = module.tgw.ec2_transit_gateway_id
-#
-#  depends_on = [
-#    aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_dev,
-#  ]
-#}
+resource "aws_route" "dev_to_tgw_private" {
+  count                  = length(module.vpc_dev.azs)
+  route_table_id         = module.vpc_dev.private_route_table_ids[count.index]
+  destination_cidr_block = "0.0.0.0/0"
+  transit_gateway_id     = module.tgw.ec2_transit_gateway_id
+
+  depends_on = [
+    aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_dev,
+  ]
+}
 
 resource "aws_route" "dev_to_tgw_public" {
   route_table_id         = module.vpc_dev.public_route_table_ids[0]
@@ -217,24 +180,25 @@ module "vpc_qa" {
   name = "qa-vpc"
   cidr = "10.2.0.0/16"
 
-  azs            = ["${local.region}a", "${local.region}b", "${local.region}c"]
-  public_subnets = ["10.2.1.0/24", "10.2.2.0/24", "10.2.3.0/24"]
+  azs             = ["${local.region}a", "${local.region}b", "${local.region}c"]
+  private_subnets = ["10.2.11.0/24", "10.2.12.0/24", "10.2.13.0/24"]
+  public_subnets  = ["10.2.1.0/24", "10.2.2.0/24", "10.2.3.0/24"]
 
   create_igw = false
 
   tags = local.tags
 }
 
-#resource "aws_route" "qa_to_tgw_private" {
-#  count                  = length(module.vpc_qa.azs)
-#  route_table_id         = module.vpc_qa.private_route_table_ids[count.index]
-#  destination_cidr_block = "0.0.0.0/0"
-#  transit_gateway_id     = module.tgw.ec2_transit_gateway_id
-#
-#  depends_on = [
-#    aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_qa,
-#  ]
-#}
+resource "aws_route" "qa_to_tgw_private" {
+  count                  = length(module.vpc_qa.azs)
+  route_table_id         = module.vpc_qa.private_route_table_ids[count.index]
+  destination_cidr_block = "0.0.0.0/0"
+  transit_gateway_id     = module.tgw.ec2_transit_gateway_id
+
+  depends_on = [
+    aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_qa,
+  ]
+}
 
 resource "aws_route" "qa_to_tgw_public" {
   route_table_id         = module.vpc_qa.public_route_table_ids[0]

@@ -235,3 +235,175 @@ resource "aws_ec2_transit_gateway_route_table_propagation" "tgw_route_propagatio
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_shrd.id
   transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_rt_qa.id
 }
+
+################################################################################
+# EC2 resources for testing connectivity
+################################################################################
+
+resource "aws_key_pair" "deployer" {
+  key_name   = "deployer-key"
+  public_key = var.public_key
+}
+
+data "aws_ami" "amazon_linux" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["amzn-ami-hvm-*-x86_64-gp2"]
+  }
+}
+
+module "security_group_shrd" {
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "~> 4.0"
+
+  name        = "${local.name}-sg-shrd"
+  description = "Security group for usage with EC2 instances"
+  vpc_id      = module.vpc_shrd.vpc_id
+
+  ingress_cidr_blocks = ["0.0.0.0/0"]
+  ingress_rules       = ["ssh-tcp"]
+  egress_rules        = ["all-all"]
+
+  tags = local.tags
+}
+
+module "ec2_shrd" {
+  source  = "terraform-aws-modules/ec2-instance/aws"
+  version = "~> 4.0.0"
+
+  name = "vm-shrd"
+
+  ami                         = data.aws_ami.amazon_linux.id
+  instance_type               = "t2.micro"
+  availability_zone           = element(module.vpc_shrd.azs, 0)
+  subnet_id                   = element(module.vpc_shrd.public_subnets, 0)
+  vpc_security_group_ids      = [module.security_group_shrd.security_group_id]
+  associate_public_ip_address = true
+
+  hibernation = true
+
+  user_data = ""
+
+  capacity_reservation_specification = {
+    capacity_reservation_preference = "open"
+  }
+
+  enable_volume_tags = false
+
+  root_block_device = [
+    {
+      encrypted   = true
+      volume_type = "gp2"
+      volume_size = 8
+    },
+  ]
+
+  key_name = aws_key_pair.deployer.key_name
+
+  tags = local.tags
+}
+
+module "security_group_dev" {
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "~> 4.0"
+
+  name        = "${local.name}-sg-dev"
+  description = "Security group for usage with EC2 instances"
+  vpc_id      = module.vpc_dev.vpc_id
+
+  ingress_cidr_blocks = ["0.0.0.0/0"]
+  ingress_rules       = ["ssh-tcp"]
+  egress_rules        = ["all-all"]
+
+  tags = local.tags
+}
+
+module "ec2_dev" {
+  source  = "terraform-aws-modules/ec2-instance/aws"
+  version = "~> 4.0.0"
+
+  name = "vm-dev"
+
+  ami                         = data.aws_ami.amazon_linux.id
+  instance_type               = "t2.micro"
+  availability_zone           = element(module.vpc_dev.azs, 0)
+  subnet_id                   = element(module.vpc_dev.private_subnets, 0)
+  vpc_security_group_ids      = [module.security_group_dev.security_group_id]
+  associate_public_ip_address = false
+
+  hibernation = true
+
+  user_data = ""
+
+  capacity_reservation_specification = {
+    capacity_reservation_preference = "open"
+  }
+
+  enable_volume_tags = false
+
+  root_block_device = [
+    {
+      encrypted   = true
+      volume_type = "gp2"
+      volume_size = 8
+    },
+  ]
+
+  key_name = aws_key_pair.deployer.key_name
+
+  tags = local.tags
+}
+
+module "security_group_qa" {
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "~> 4.0"
+
+  name        = "${local.name}-sg-qa"
+  description = "Security group for usage with EC2 instances"
+  vpc_id      = module.vpc_qa.vpc_id
+
+  ingress_cidr_blocks = ["0.0.0.0/0"]
+  ingress_rules       = ["ssh-tcp"]
+  egress_rules        = ["all-all"]
+
+  tags = local.tags
+}
+
+module "ec2_qa" {
+  source  = "terraform-aws-modules/ec2-instance/aws"
+  version = "~> 4.0.0"
+
+  name = "vm-qa"
+
+  ami                         = data.aws_ami.amazon_linux.id
+  instance_type               = "t2.micro"
+  availability_zone           = element(module.vpc_qa.azs, 0)
+  subnet_id                   = element(module.vpc_qa.private_subnets, 0)
+  vpc_security_group_ids      = [module.security_group_qa.security_group_id]
+  associate_public_ip_address = false
+
+  hibernation = true
+
+  user_data = ""
+
+  capacity_reservation_specification = {
+    capacity_reservation_preference = "open"
+  }
+
+  enable_volume_tags = false
+
+  root_block_device = [
+    {
+      encrypted   = true
+      volume_type = "gp2"
+      volume_size = 8
+    },
+  ]
+
+  key_name = aws_key_pair.deployer.key_name
+
+  tags = local.tags
+}

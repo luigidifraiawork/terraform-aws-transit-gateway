@@ -2,6 +2,8 @@ provider "aws" {
   region = local.region
 }
 
+data "aws_availability_zones" "available" {}
+
 locals {
   name   = "ex-tgw-${replace(basename(path.cwd), "_", "-")}"
   region = "us-east-1"
@@ -26,8 +28,6 @@ locals {
     GithubOrg  = "terraform-aws-transit-gateway"
   }
 }
-
-data "aws_availability_zones" "available" {}
 
 ################################################################################
 # Transit Gateway Module

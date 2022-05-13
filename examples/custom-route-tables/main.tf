@@ -6,6 +6,7 @@ data "aws_availability_zones" "available" {}
 
 locals {
   name   = "ex-tgw-${replace(basename(path.cwd), "_", "-")}"
+  #name   = "tgw-custom-routes"
   region = "us-east-1"
 
   azs = slice(data.aws_availability_zones.available.names, 0, 3)
@@ -36,6 +37,9 @@ locals {
 module "tgw" {
   source = "../../"
 
+  #source  = "terraform-aws-modules/transit-gateway/aws"
+  #version = "~>2.8.0"
+
   name            = local.name
   amazon_side_asn = 64532
 
@@ -53,6 +57,18 @@ module "tgw" {
   share_tgw = false
 
   tags = local.tags
+}
+
+resource "aws_ec2_transit_gateway_route_table" "tgw_rt_networking" {
+  transit_gateway_id = module.tgw.ec2_transit_gateway_id
+}
+
+resource "aws_ec2_transit_gateway_route_table" "tgw_rt_dev" {
+  transit_gateway_id = module.tgw.ec2_transit_gateway_id
+}
+
+resource "aws_ec2_transit_gateway_route_table" "tgw_rt_qa" {
+  transit_gateway_id = module.tgw.ec2_transit_gateway_id
 }
 
 ################################################################################
@@ -104,10 +120,6 @@ resource "aws_ec2_transit_gateway_vpc_attachment" "tgw_attachment_networking" {
   # Turn off default route table association and propagation, as we're providing our own
   transit_gateway_default_route_table_association = false
   transit_gateway_default_route_table_propagation = false
-}
-
-resource "aws_ec2_transit_gateway_route_table" "tgw_rt_networking" {
-  transit_gateway_id = module.tgw.ec2_transit_gateway_id
 }
 
 resource "aws_ec2_transit_gateway_route_table_association" "tgw_route_association_networking" {
@@ -174,10 +186,6 @@ resource "aws_ec2_transit_gateway_vpc_attachment" "tgw_attachment_dev" {
   transit_gateway_default_route_table_propagation = false
 }
 
-resource "aws_ec2_transit_gateway_route_table" "tgw_rt_dev" {
-  transit_gateway_id = module.tgw.ec2_transit_gateway_id
-}
-
 resource "aws_ec2_transit_gateway_route_table_association" "tgw_route_association_dev" {
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_dev.id
   transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_rt_dev.id
@@ -235,10 +243,6 @@ resource "aws_ec2_transit_gateway_vpc_attachment" "tgw_attachment_qa" {
   # Turn off default route table association and propagation, as we're providing our own
   transit_gateway_default_route_table_association = false
   transit_gateway_default_route_table_propagation = false
-}
-
-resource "aws_ec2_transit_gateway_route_table" "tgw_rt_qa" {
-  transit_gateway_id = module.tgw.ec2_transit_gateway_id
 }
 
 resource "aws_ec2_transit_gateway_route_table_association" "tgw_route_association_qa" {

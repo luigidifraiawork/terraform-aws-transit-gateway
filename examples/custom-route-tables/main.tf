@@ -171,16 +171,16 @@ resource "aws_ec2_transit_gateway_route_table_association" "tgw_route_associatio
   #transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_rt_networking.id
 }
 
-resource "aws_ec2_transit_gateway_route_table_propagation" "tgw_route_propagation_networking_to_dev" {
-  transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_dev.id
-  transit_gateway_route_table_id = data.aws_ec2_transit_gateway_route_table.tgw_rt_networking.id
-  #transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_rt_networking.id
+resource "aws_ec2_transit_gateway_route_table_propagation" "tgw_route_propagation_dev_to_networking" {
+  transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_networking.id
+  transit_gateway_route_table_id = data.aws_ec2_transit_gateway_route_table.tgw_rt_dev.id
+  #transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_rt_dev.id
 }
 
-resource "aws_ec2_transit_gateway_route_table_propagation" "tgw_route_propagation_networking_to_qa" {
-  transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_qa.id
-  transit_gateway_route_table_id = data.aws_ec2_transit_gateway_route_table.tgw_rt_networking.id
-  #transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_rt_networking.id
+resource "aws_ec2_transit_gateway_route_table_propagation" "tgw_route_propagation_qa_to_networking" {
+  transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_networking.id
+  transit_gateway_route_table_id = data.aws_ec2_transit_gateway_route_table.tgw_rt_qa.id
+  #transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_rt_qa.id
 }
 
 module "vpc_dev" {
@@ -238,10 +238,10 @@ resource "aws_ec2_transit_gateway_route_table_association" "tgw_route_associatio
   #transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_rt_dev.id
 }
 
-resource "aws_ec2_transit_gateway_route_table_propagation" "tgw_route_propagation_dev_to_networking" {
-  transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_networking.id
-  transit_gateway_route_table_id = data.aws_ec2_transit_gateway_route_table.tgw_rt_dev.id
-  #transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_rt_dev.id
+resource "aws_ec2_transit_gateway_route_table_propagation" "tgw_route_propagation_networking_to_dev" {
+  transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_dev.id
+  transit_gateway_route_table_id = data.aws_ec2_transit_gateway_route_table.tgw_rt_networking.id
+  #transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_rt_networking.id
 }
 
 module "vpc_qa" {
@@ -299,10 +299,10 @@ resource "aws_ec2_transit_gateway_route_table_association" "tgw_route_associatio
   #transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_rt_qa.id
 }
 
-resource "aws_ec2_transit_gateway_route_table_propagation" "tgw_route_propagation_qa_to_networking" {
-  transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_networking.id
-  transit_gateway_route_table_id = data.aws_ec2_transit_gateway_route_table.tgw_rt_qa.id
-  #transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_rt_qa.id
+resource "aws_ec2_transit_gateway_route_table_propagation" "tgw_route_propagation_networking_to_qa" {
+  transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_qa.id
+  transit_gateway_route_table_id = data.aws_ec2_transit_gateway_route_table.tgw_rt_networking.id
+  #transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_rt_networking.id
 }
 
 ################################################################################

@@ -98,3 +98,22 @@ output "ram_principal_association_id" {
   description = "The Amazon Resource Name (ARN) of the Resource Share and the principal, separated by a comma"
   value       = module.tgw.ram_principal_association_id
 }
+
+################################################################################
+# EC2 connection details
+################################################################################
+
+output "ec2_networking_public_ip" {
+  description = "The public IP of the EC2 instance in the networking VPC"
+  value       = module.ec2_networking.public_ip
+}
+
+output "ec2_dev_private_ip" {
+  description = "The private IP of the EC2 instance in the dev VPC"
+  value       = module.ec2_dev.private_ip
+}
+
+output "ec2_qa_private_ip" {
+  description = "The private IP of the EC2 instance in the qa VPC"
+  value       = module.ec2_qa.private_ip
+}

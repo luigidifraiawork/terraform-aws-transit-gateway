@@ -152,9 +152,9 @@ resource "aws_route" "inspection_to_tgw_public" {
 resource "aws_ec2_transit_gateway_vpc_attachment" "tgw_attachment_inspection" {
   transit_gateway_id = module.tgw.ec2_transit_gateway_id
 
-  # Attach VPC and public subnets to the Transit Gateway
+  # Attach VPC and private subnets to the Transit Gateway
   vpc_id     = module.vpc_inspection.vpc_id
-  subnet_ids = module.vpc_inspection.public_subnets
+  subnet_ids = module.vpc_inspection.private_subnets
 
   # Turn off default route table association and propagation, as we're providing our own
   transit_gateway_default_route_table_association = false

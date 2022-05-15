@@ -103,9 +103,9 @@ output "ram_principal_association_id" {
 # EC2 connection details
 ################################################################################
 
-output "ec2_networking_public_ip" {
-  description = "The public IP of the EC2 instance in the networking VPC"
-  value       = module.ec2_networking.public_ip
+output "ec2_inspection_public_ip" {
+  description = "The public IP of the EC2 instance in the inspection VPC"
+  value       = module.ec2_inspection.public_ip
 }
 
 output "ec2_dev_private_ip" {

@@ -61,19 +61,24 @@ resource "aws_ec2_transit_gateway_route_table" "tgw_route_tables" {
   }
 }
 
+resource "aws_ssm_parameter" "tgw_route_table_ids" {
+  for_each = toset(local.tgw_routes)
+
+  name = "/networking/tgw/route-table-id/${each.key}"
+  type = "String"
+  value = aws_ec2_transit_gateway_route_table.tgw_route_tables[each.key].id
+}
+
 ################################################################################
 # Glue data sources to emulate multi-account resource lookups (Spoke accounts)
 ################################################################################
 
-data "aws_ec2_transit_gateway_route_table" "tgw_route_tables" {
+data "aws_ssm_parameter" "tgw_route_table_ids" {
   for_each = toset(local.tgw_routes)
 
-  filter {
-    name   = "tag:Name"
-    values = ["${each.key}"]
-  }
+  name = "/networking/tgw/route-table-id/${each.key}"
 
-  depends_on = [aws_ec2_transit_gateway_route_table.tgw_route_tables]
+  depends_on = [aws_ssm_parameter.tgw_route_table_ids]
 }
 
 ################################################################################
@@ -148,7 +153,7 @@ resource "aws_ec2_transit_gateway_vpc_attachment" "tgw_attachment_inspection" {
 
 resource "aws_ec2_transit_gateway_route_table_association" "tgw_route_association_inspection" {
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_inspection.id
-  #transit_gateway_route_table_id = data.aws_ec2_transit_gateway_route_table.tgw_route_tables[local.hub].id
+  #transit_gateway_route_table_id = data.aws_ssm_parameter.tgw_route_table_ids[local.hub]
   transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_route_tables[local.hub].id
 }
 
@@ -156,7 +161,7 @@ resource "aws_ec2_transit_gateway_route_table_propagation" "tgw_route_propagatio
   for_each = toset(local.spokes)
 
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_inspection.id
-  #transit_gateway_route_table_id = data.aws_ec2_transit_gateway_route_table.tgw_route_tables[each.key].id
+  #transit_gateway_route_table_id = data.aws_ssm_parameter.tgw_route_table_ids[each.key]
   transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_route_tables[each.key].id
 }
 
@@ -266,13 +271,13 @@ resource "aws_ec2_transit_gateway_vpc_attachment" "tgw_attachment_dev" {
 
 resource "aws_ec2_transit_gateway_route_table_association" "tgw_route_association_dev" {
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_dev.id
-  transit_gateway_route_table_id = data.aws_ec2_transit_gateway_route_table.tgw_route_tables["dev"].id
+  transit_gateway_route_table_id = data.aws_ssm_parameter.tgw_route_table_ids["dev"].value
   #transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_route_tables["dev"].id
 }
 
 resource "aws_ec2_transit_gateway_route_table_propagation" "tgw_route_propagation_inspection_to_dev" {
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_dev.id
-  transit_gateway_route_table_id = data.aws_ec2_transit_gateway_route_table.tgw_route_tables[local.hub].id
+  transit_gateway_route_table_id = data.aws_ssm_parameter.tgw_route_table_ids[local.hub].value
   #transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_route_tables[local.hub].id
 }
 
@@ -382,13 +387,13 @@ resource "aws_ec2_transit_gateway_vpc_attachment" "tgw_attachment_qa" {
 
 resource "aws_ec2_transit_gateway_route_table_association" "tgw_route_association_qa" {
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_qa.id
-  transit_gateway_route_table_id = data.aws_ec2_transit_gateway_route_table.tgw_route_tables["qa"].id
+  transit_gateway_route_table_id = data.aws_ssm_parameter.tgw_route_table_ids["qa"].value
   #transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_route_tables["qa"].id
 }
 
 resource "aws_ec2_transit_gateway_route_table_propagation" "tgw_route_propagation_inspection_to_qa" {
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_qa.id
-  transit_gateway_route_table_id = data.aws_ec2_transit_gateway_route_table.tgw_route_tables[local.hub].id
+  transit_gateway_route_table_id = data.aws_ssm_parameter.tgw_route_table_ids[local.hub].value
   #transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_route_tables[local.hub].id
 }
 

@@ -148,15 +148,16 @@ resource "aws_ec2_transit_gateway_vpc_attachment" "tgw_attachment_inspection" {
 
 resource "aws_ec2_transit_gateway_route_table_association" "tgw_route_association_inspection" {
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_inspection.id
-  transit_gateway_route_table_id = data.aws_ec2_transit_gateway_route_table.tgw_route_tables[local.hub].id
-  #transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_rts[local.hub].id
+  #transit_gateway_route_table_id = data.aws_ec2_transit_gateway_route_table.tgw_route_tables[local.hub].id
+  transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_route_tables[local.hub].id
 }
 
 resource "aws_ec2_transit_gateway_route_table_propagation" "tgw_route_propagation_spokes_to_inspection" {
   for_each = toset(local.spokes)
 
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_inspection.id
-  transit_gateway_route_table_id = data.aws_ec2_transit_gateway_route_table.tgw_route_tables[each.key].id
+  #transit_gateway_route_table_id = data.aws_ec2_transit_gateway_route_table.tgw_route_tables[each.key].id
+  transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_route_tables[each.key].id
 }
 
 module "security_group_inspection" {
@@ -266,13 +267,13 @@ resource "aws_ec2_transit_gateway_vpc_attachment" "tgw_attachment_dev" {
 resource "aws_ec2_transit_gateway_route_table_association" "tgw_route_association_dev" {
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_dev.id
   transit_gateway_route_table_id = data.aws_ec2_transit_gateway_route_table.tgw_route_tables["dev"].id
-  #transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_rts["dev"].id
+  #transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_route_tables["dev"].id
 }
 
 resource "aws_ec2_transit_gateway_route_table_propagation" "tgw_route_propagation_inspection_to_dev" {
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_dev.id
   transit_gateway_route_table_id = data.aws_ec2_transit_gateway_route_table.tgw_route_tables[local.hub].id
-  #transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_rts[local.hub].id
+  #transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_route_tables[local.hub].id
 }
 
 module "security_group_dev" {
@@ -382,13 +383,13 @@ resource "aws_ec2_transit_gateway_vpc_attachment" "tgw_attachment_qa" {
 resource "aws_ec2_transit_gateway_route_table_association" "tgw_route_association_qa" {
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_qa.id
   transit_gateway_route_table_id = data.aws_ec2_transit_gateway_route_table.tgw_route_tables["qa"].id
-  #transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_rts["qa"].id
+  #transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_route_tables["qa"].id
 }
 
 resource "aws_ec2_transit_gateway_route_table_propagation" "tgw_route_propagation_inspection_to_qa" {
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_qa.id
   transit_gateway_route_table_id = data.aws_ec2_transit_gateway_route_table.tgw_route_tables[local.hub].id
-  #transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_rts[local.hub].id
+  #transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_route_tables[local.hub].id
 }
 
 module "security_group_qa" {

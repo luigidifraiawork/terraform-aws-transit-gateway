@@ -153,7 +153,7 @@ resource "aws_ec2_transit_gateway_vpc_attachment" "tgw_attachment_inspection" {
 
 resource "aws_ec2_transit_gateway_route_table_association" "tgw_route_association_inspection" {
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_inspection.id
-  #transit_gateway_route_table_id = data.aws_ssm_parameter.tgw_route_table_ids[local.hub]
+  #transit_gateway_route_table_id = data.aws_ssm_parameter.tgw_route_table_ids[local.hub].value
   transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_route_tables[local.hub].id
 }
 
@@ -161,7 +161,7 @@ resource "aws_ec2_transit_gateway_route_table_propagation" "tgw_route_propagatio
   for_each = toset(local.spokes)
 
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_inspection.id
-  #transit_gateway_route_table_id = data.aws_ssm_parameter.tgw_route_table_ids[each.key]
+  #transit_gateway_route_table_id = data.aws_ssm_parameter.tgw_route_table_ids[each.key].value
   transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_route_tables[each.key].id
 }
 

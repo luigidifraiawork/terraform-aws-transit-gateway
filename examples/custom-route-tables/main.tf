@@ -77,7 +77,7 @@ data "aws_ec2_transit_gateway_route_table" "tgw_route_tables" {
 }
 
 ################################################################################
-# Supporting resources (Spoke accounts)
+# Supporting resources (All accounts)
 ################################################################################
 
 resource "aws_key_pair" "deployer" {
@@ -96,7 +96,7 @@ data "aws_ami" "amazon_linux" {
 }
 
 ################################################################################
-# Network Hub resources (Networking account)
+# Hub resources (Networking account)
 ################################################################################
 
 module "vpc_inspection" {

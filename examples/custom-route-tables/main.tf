@@ -6,29 +6,14 @@ data "aws_availability_zones" "available" {}
 
 locals {
   name   = "ex-tgw-${replace(basename(path.cwd), "_", "-")}"
-  #name   = "tgw-custom-routes"
   region = "us-east-1"
 
   azs = slice(data.aws_availability_zones.available.names, 0, 3)
 
-  vpc_config = {
-    inspection = {
-      cidr = "10.1.0.0/16"
-      spoke = false
-    }
-    dev = {
-      cidr = "10.2.0.0/16"
-      spoke = true
-    }
-    qa = {
-      cidr = "10.3.0.0/16"
-      spoke = true
-    }
-  }
+  hub    = [ for i in keys(var.vpc_config) : i if var.vpc_config[i].spoke == false ].0
+  spokes = [ for i in keys(var.vpc_config) : i if var.vpc_config[i].spoke == true ]
 
-  spokes = [ for i in keys(local.vpc_config) : i if local.vpc_config[i].spoke == true ]
-
-  tgw_routes = keys(local.vpc_config)
+  tgw_routes = keys(var.vpc_config)
 
   tags = {
     Example    = local.name
@@ -38,7 +23,7 @@ locals {
 }
 
 ################################################################################
-# Transit Gateway Module
+# Transit Gateway Module (Networking account)
 ################################################################################
 
 module "tgw" {
@@ -77,7 +62,7 @@ resource "aws_ec2_transit_gateway_route_table" "tgw_route_tables" {
 }
 
 ################################################################################
-# Glue data sources to emulate multi-account resource lookups
+# Glue data sources to emulate multi-account resource lookups (Spoke accounts)
 ################################################################################
 
 data "aws_ec2_transit_gateway_route_table" "tgw_route_tables" {
@@ -92,7 +77,7 @@ data "aws_ec2_transit_gateway_route_table" "tgw_route_tables" {
 }
 
 ################################################################################
-# Supporting resources
+# Supporting resources (Spoke accounts)
 ################################################################################
 
 resource "aws_key_pair" "deployer" {
@@ -111,7 +96,7 @@ data "aws_ami" "amazon_linux" {
 }
 
 ################################################################################
-# Network Hub resources
+# Network Hub resources (Networking account)
 ################################################################################
 
 module "vpc_inspection" {
@@ -119,11 +104,11 @@ module "vpc_inspection" {
   version = "~> 3.0"
 
   name = "${local.name}-inspection"
-  cidr = local.vpc_config.inspection.cidr
+  cidr = var.vpc_config.inspection.cidr
 
   azs             = local.azs
-  private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_config.inspection.cidr, 8, k)]
-  public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_config.inspection.cidr, 8, k + 10)]
+  private_subnets = [for k, v in local.azs : cidrsubnet(var.vpc_config.inspection.cidr, 8, k)]
+  public_subnets  = [for k, v in local.azs : cidrsubnet(var.vpc_config.inspection.cidr, 8, k + 10)]
 
   tags = local.tags
 }
@@ -163,8 +148,8 @@ resource "aws_ec2_transit_gateway_vpc_attachment" "tgw_attachment_inspection" {
 
 resource "aws_ec2_transit_gateway_route_table_association" "tgw_route_association_inspection" {
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_inspection.id
-  transit_gateway_route_table_id = data.aws_ec2_transit_gateway_route_table.tgw_route_tables["inspection"].id
-  #transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_rts["inspection"].id
+  transit_gateway_route_table_id = data.aws_ec2_transit_gateway_route_table.tgw_route_tables[local.hub].id
+  #transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_rts[local.hub].id
 }
 
 resource "aws_ec2_transit_gateway_route_table_propagation" "tgw_route_propagation_spokes_to_inspection" {
@@ -182,7 +167,7 @@ module "security_group_inspection" {
   description = "Security group for usage with EC2 instances"
   vpc_id      = module.vpc_inspection.vpc_id
 
-  ingress_cidr_blocks = ["0.0.0.0/0"]
+  ingress_cidr_blocks = [var.source_cidr_block]
   ingress_rules       = ["ssh-tcp"]
   egress_rules        = ["all-all"]
 
@@ -226,7 +211,7 @@ module "ec2_inspection" {
 }
 
 ################################################################################
-# Dev Spoke resources
+# Dev Spoke resources (Spoke account)
 ################################################################################
 
 module "vpc_dev" {
@@ -234,11 +219,11 @@ module "vpc_dev" {
   version = "~> 3.0"
 
   name = "${local.name}-dev"
-  cidr = local.vpc_config.dev.cidr
+  cidr = var.vpc_config.dev.cidr
 
   azs             = local.azs
-  private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_config.dev.cidr, 8, k)]
-  public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_config.dev.cidr, 8, k + 10)]
+  private_subnets = [for k, v in local.azs : cidrsubnet(var.vpc_config.dev.cidr, 8, k)]
+  public_subnets  = [for k, v in local.azs : cidrsubnet(var.vpc_config.dev.cidr, 8, k + 10)]
 
   create_igw = false
 
@@ -286,8 +271,8 @@ resource "aws_ec2_transit_gateway_route_table_association" "tgw_route_associatio
 
 resource "aws_ec2_transit_gateway_route_table_propagation" "tgw_route_propagation_inspection_to_dev" {
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_dev.id
-  transit_gateway_route_table_id = data.aws_ec2_transit_gateway_route_table.tgw_route_tables["inspection"].id
-  #transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_rts["inspection"].id
+  transit_gateway_route_table_id = data.aws_ec2_transit_gateway_route_table.tgw_route_tables[local.hub].id
+  #transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_rts[local.hub].id
 }
 
 module "security_group_dev" {
@@ -342,7 +327,7 @@ module "ec2_dev" {
 }
 
 ################################################################################
-# QA Spoke resources
+# QA Spoke resources (Spoke account)
 ################################################################################
 
 module "vpc_qa" {
@@ -350,11 +335,11 @@ module "vpc_qa" {
   version = "~> 3.0"
 
   name = "${local.name}-qa"
-  cidr = local.vpc_config.qa.cidr
+  cidr = var.vpc_config.qa.cidr
 
   azs             = local.azs
-  private_subnets = [for k, v in local.azs : cidrsubnet(local.vpc_config.qa.cidr, 8, k)]
-  public_subnets  = [for k, v in local.azs : cidrsubnet(local.vpc_config.qa.cidr, 8, k + 10)]
+  private_subnets = [for k, v in local.azs : cidrsubnet(var.vpc_config.qa.cidr, 8, k)]
+  public_subnets  = [for k, v in local.azs : cidrsubnet(var.vpc_config.qa.cidr, 8, k + 10)]
 
   create_igw = false
 
@@ -402,8 +387,8 @@ resource "aws_ec2_transit_gateway_route_table_association" "tgw_route_associatio
 
 resource "aws_ec2_transit_gateway_route_table_propagation" "tgw_route_propagation_inspection_to_qa" {
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.tgw_attachment_qa.id
-  transit_gateway_route_table_id = data.aws_ec2_transit_gateway_route_table.tgw_route_tables["inspection"].id
-  #transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_rts["inspection"].id
+  transit_gateway_route_table_id = data.aws_ec2_transit_gateway_route_table.tgw_route_tables[local.hub].id
+  #transit_gateway_route_table_id = aws_ec2_transit_gateway_route_table.tgw_rts[local.hub].id
 }
 
 module "security_group_qa" {

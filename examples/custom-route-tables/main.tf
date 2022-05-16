@@ -10,7 +10,7 @@ locals {
 
   azs = slice(data.aws_availability_zones.available.names, 0, 3)
 
-  hub    = [ for i in keys(var.vpc_config) : i if var.vpc_config[i].spoke == false ].0
+  hub    = element([ for i in keys(var.vpc_config) : i if var.vpc_config[i].spoke == false ], 0)
   spokes = [ for i in keys(var.vpc_config) : i if var.vpc_config[i].spoke == true ]
 
   tgw_routes = keys(var.vpc_config)
@@ -115,7 +115,7 @@ module "vpc_inspection" {
 
 resource "aws_route" "inspection_to_tgw_private" {
   count                  = length(module.vpc_inspection.azs)
-  route_table_id         = module.vpc_inspection.private_route_table_ids[count.index]
+  route_table_id         = element(module.vpc_inspection.private_route_table_ids, count.index)
   destination_cidr_block = "10.0.0.0/8"
   transit_gateway_id     = module.tgw.ec2_transit_gateway_id
 
@@ -125,7 +125,7 @@ resource "aws_route" "inspection_to_tgw_private" {
 }
 
 resource "aws_route" "inspection_to_tgw_public" {
-  route_table_id         = module.vpc_inspection.public_route_table_ids[0]
+  route_table_id         = element(module.vpc_inspection.public_route_table_ids, 0)
   destination_cidr_block = "10.0.0.0/8"
   transit_gateway_id     = module.tgw.ec2_transit_gateway_id
 
@@ -232,7 +232,7 @@ module "vpc_dev" {
 
 resource "aws_route" "dev_to_tgw_private" {
   count                  = length(module.vpc_dev.azs)
-  route_table_id         = module.vpc_dev.private_route_table_ids[count.index]
+  route_table_id         = element(module.vpc_dev.private_route_table_ids, count.index)
   destination_cidr_block = "0.0.0.0/0"
   transit_gateway_id     = module.tgw.ec2_transit_gateway_id
 
@@ -242,7 +242,7 @@ resource "aws_route" "dev_to_tgw_private" {
 }
 
 resource "aws_route" "dev_to_tgw_public" {
-  route_table_id         = module.vpc_dev.public_route_table_ids[0]
+  route_table_id         = element(module.vpc_dev.public_route_table_ids, 0)
   destination_cidr_block = "0.0.0.0/0"
   transit_gateway_id     = module.tgw.ec2_transit_gateway_id
 
@@ -348,7 +348,7 @@ module "vpc_qa" {
 
 resource "aws_route" "qa_to_tgw_private" {
   count                  = length(module.vpc_qa.azs)
-  route_table_id         = module.vpc_qa.private_route_table_ids[count.index]
+  route_table_id         = element(module.vpc_qa.private_route_table_ids, count.index)
   destination_cidr_block = "0.0.0.0/0"
   transit_gateway_id     = module.tgw.ec2_transit_gateway_id
 
@@ -358,7 +358,7 @@ resource "aws_route" "qa_to_tgw_private" {
 }
 
 resource "aws_route" "qa_to_tgw_public" {
-  route_table_id         = module.vpc_qa.public_route_table_ids[0]
+  route_table_id         = element(module.vpc_qa.public_route_table_ids, 0)
   destination_cidr_block = "0.0.0.0/0"
   transit_gateway_id     = module.tgw.ec2_transit_gateway_id
 
